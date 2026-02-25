@@ -260,21 +260,12 @@ data %>%
 Ich lade hier die [GIS-Daten der Gemeinden](https://daten.gdz.bkg.bund.de/produkte/vg/vg250_ebenen_0101/aktuell/vg250_01-01.utm32s.gpkg.ebenen.zip) des Bundesamts für Kartographie und Geodäsie (BKG) herunter und extrahiere daraus alle deutschen Gemeindegrenzen.
 
 ```{r vg250_laden}
+#st_layers("./data/GISDaten/DE_VG250.gpkg")
 
-st_layers("./data/GISDaten/DE_VG250.gpkg")
-
-vg250 <- st_read("./data/GISDaten/DE_VG250.gpkg",layer = "vg250_gem") %>% 
-  filter(GF==4) %>% # nur Landflächen, nicht Wasserflächen ...
+vg250 <- st_read("./data/GISDaten/DE_VG250.gpkg", layer = "vg250_gem") %>%
+  filter(GF == 4) # nur Landflächen, nicht Wasserflächen ...
   #filter(SN_G != "000") %>%
-  mutate(
-    #gemeinde_kennziffer = paste0(SN_L,SN_R,SN_K,SN_V1,SN_V2)
-    gemeinde_kennziffer = paste0(str_sub(SDV_ARS,1,5),str_sub(SDV_ARS,-3))
-    # gemeinde_kennziffer = paste0(
-    #   str_pad(SN_L, 2, pad = "0"),
-    #   str_pad(SN_R, 1, pad = "0"),
-    #   str_pad(SN_K, 2, pad = "0"),
-    #   str_pad(SN_V2, 3, pad = "0"))
-  )
+#  mutate(gemeinde_kennziffer = paste0(str_sub(SDV_ARS, 1, 5), str_sub(SDV_ARS, -3)))
 # %>%
 #   group_by(gemeinde_kennziffer) %>%
 #   summarise(
@@ -283,27 +274,28 @@ vg250 <- st_read("./data/GISDaten/DE_VG250.gpkg",layer = "vg250_gem") %>%
 #   )
 
 ggplot(vg250) +
-  geom_sf(aes(geometry=geom,fill=WSK),linewidth=0.1)#, fill = "grey"
-
-
-stopifnot(all(nchar(vg250$gemeinde_kennziffer) == 8))
+  geom_sf(aes(geometry=geom,fill=paste(BEM,BEZ)),color=NA)+
+  scale_fill_discrete(name="Art der Gemeinde")
 
 bla<-vg250 %>% 
   st_drop_geometry()
+
 bla %>% 
-  filter(gemeinde_kennziffer!=AGS)
+  group_by(BEM,BEZ) %>% 
+  summarise(n=n())
 
 ```
 
 ```{r gis_visualisierung_vg250}
 blubb <- vg250 %>%
-  left_join(gv_gemeinden, by = "gemeinde_kennziffer")
+  left_join(gv_gemeinden, by = join_by(AGS==gemeinde_kennziffer))
 
 blubb %>%
   ggplot() +
   geom_sf(aes(fill = bevoelkerung/flaeche,geometry=geom), color = NA) +
   scale_fill_viridis_c(option="A",direction = -1) +
-  theme_minimal()
+  theme_minimal()+
+  labs(fill="Bevölkerungsdichte")
 
 ```
 
@@ -313,9 +305,9 @@ blubb %>%
 
 
 # Gibt es Dubletten?
-blubb %>%
+vg250 %>%
   st_drop_geometry() %>%
-  count(gemeinde_kennziffer) %>%
+  count(AGS) %>%
   filter(n > 1)
 
 
@@ -326,7 +318,7 @@ data_sf <- data  %>%
     bevoelkerung = max(bevoelkerung, na.rm = FALSE),
     belastete = sum(exponierte)
   ) %>%
-  left_join(vg250, by = "gemeinde_kennziffer",relationship = "many-to-many") %>%
+  left_join(vg250, by = join_by(gemeinde_kennziffer==AGS),relationship = "many-to-many") %>%
   mutate(GEN = coalesce(name_stadt_gemeinde, GEN))
 ```
 
