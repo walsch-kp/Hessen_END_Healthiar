@@ -170,10 +170,12 @@ data<-data %>%
 ## Anreichern mit Gemeindeverzeichnis Daten (Destatis)
 
 Die Datei
+
 ```{r gv_pfad}
 pfad_gv_datei<-"./data/Gebietstabellen/GV100AD_30112025.txt"
 pfad_gv_datei
 ```
+
 liegt in einem "fixed width" Format vor, welches gut maschinen- aber schlecht menschenlesbar ist. Hier werden nur die relevanten Zeilen eingelesen,
 
 ```{r gv_einlesen}
@@ -228,7 +230,6 @@ data <- data %>%
 
 Bisher eingelesen wurden die in @tbl-expositionsstatistik zusammengefassten Expositionsdaten
 
-
 ```{r tabelle_expositionsstatistik}
 #| label: tbl-expositionsstatistik
 #| tbl-cap: "Deskriptive Auswertung der bisher eingelesenen Expositionsdaten"
@@ -253,7 +254,6 @@ data %>%
   knitr::kable()
 
 ```
-
 
 ## GIS-Übersicht
 
